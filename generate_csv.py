@@ -5,6 +5,9 @@ import string
 import sys
 from datetime import datetime
 
+import namealizer
+
+
 def integer_csv(filemask, addtime, rows, schema, delimiter, header, seed):
     if seed:
         random.seed(seed)
@@ -13,11 +16,11 @@ def integer_csv(filemask, addtime, rows, schema, delimiter, header, seed):
     extension = '.txt'
     filename = filemask + '_' + filestamp + extension if addtime else filemask + extension
 
-    char_set = (string.ascii_letters + string.digits +
-                '"' + "'" + "#&* \t")
+    char_set = (string.ascii_letters + string.digits + ' ')
+                # '' + "'" + "#&* \t")
 
     head = []
-    intcount, strcount, floatcount, ipcount, datecount = 0,0,0,0,0
+    intcount, strcount, floatcount, ipcount, datecount, wordcount, pipewordscount, namecount = 0,0,0,0,0,0,0,0
     for column in schema:
         if column == 'int':
             intcount += 1
@@ -46,10 +49,27 @@ def integer_csv(filemask, addtime, rows, schema, delimiter, header, seed):
             generators.append(lambda: ''.join(
                 datetime.fromtimestamp(random.randint(0, 1e10)).strftime("%d/%m/%y_%H:%M")
             ))
+        elif column == 'word':
+            wordcount += 1
+            head.append('label_' + str(wordcount))
+            generators.append(lambda: ''.join(
+                generateword(seed)
+            ))
+        elif column == 'pipewords':
+            wordcount += 1
+            head.append('labels_' + str(pipewordscount))
+            generators.append(lambda: ''.join(
+                generatepipewords(seed)
+            ))
 
-    try:
+# # // deal with csv limitation for delimiter var
+#             doesn't work!
+#         if delimiter=='\\t':
+#             delimiter='\t'
+
         # test existence of file
-        f = open(filename,'w',newline='')
+    try:
+        f = open(filename,'w',newline='', encoding='utf-8')
         writer = csv.writer(f,delimiter=delimiter)
     except:
         writer = csv.writer(sys.stdout,delimiter=delimiter)
@@ -58,6 +78,21 @@ def integer_csv(filemask, addtime, rows, schema, delimiter, header, seed):
             writer.writerow(head)
         for x in range(rows):
             writer.writerow([g() for g in generators])
+
+def generateword(seed):
+    wg = namealizer.WordGenerator()
+    if seed:
+        wg.seed = seed
+    return wg[1]
+
+def generatepipewords(seed):
+    pipes = random.randint(1, 3)
+    wg = namealizer.WordGenerator()
+    if seed:
+        wg.seed = seed
+    words = wg[pipes]
+    retval = words.replace(' ','|')
+    return retval
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -83,7 +118,7 @@ if __name__ == '__main__':
                         help='generate a simple header')
     parser.set_defaults(header=False)
     parser.add_argument('schema', type=str, nargs='+',
-                        choices=['int', 'str', 'float', 'ip', 'date'],
+                        choices=['int', 'str', 'float', 'ip', 'date', 'word', 'pipewords', 'name'],
                         help='list of column types to generate')
 
     args = parser.parse_args()

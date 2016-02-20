@@ -4,7 +4,6 @@ import argparse
 import csv
 import string
 
-
 def integer_csv(rows, schema, delimiter):
     random.seed(42)
     generators = []
@@ -21,7 +20,7 @@ def integer_csv(rows, schema, delimiter):
             generators.append(lambda: random.random())
 
     writer = csv.writer(sys.stdout, delimiter=delimiter)
-    for x in xrange(rows):
+    for x in range(rows):
         writer.writerow([g() for g in generators])
 
 if __name__ == '__main__':

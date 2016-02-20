@@ -14,7 +14,7 @@ Get help with `-h`
 Example usage:
 
 ```python
-python generate_csv.py 10 --delimiter ',' int int float str
+python generate_csv.py 10 --delimiter=, int int float str
 ```
 
 generates

@@ -25,6 +25,16 @@ def integer_csv(filemask, addtime, rows, schema, delimiter, seed):
                 random.choice(char_set) for _ in range(12)))
         elif column == 'float':
             generators.append(lambda: random.random())
+        elif column == 'ip':
+            # http://stackoverflow.com/a/21014713 Thanks jonrsharpe
+            generators.append(lambda: ''.join(
+              ".".join(map(str, (random.randint(0, 255)
+                        for _ in range(4))))
+            ))
+        elif column == 'date':
+            generators.append(lambda: ''.join(
+                datetime.fromtimestamp(random.randint(0, 1e10)).strftime("%d/%m/%y_%H:%M")
+            ))
 
     try:
         # test existence of file
@@ -60,7 +70,7 @@ if __name__ == '__main__':
     parser.add_argument('--how-many', dest='howmany', type=int, default=1, required=False,
                         help='how many files to generate. Default is 1')
     parser.add_argument('schema', type=str, nargs='+',
-                        choices=['int', 'str', 'float'],
+                        choices=['int', 'str', 'float', 'ip', 'date'],
                         help='list of column types to generate')
 
     args = parser.parse_args()

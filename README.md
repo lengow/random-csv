@@ -4,10 +4,17 @@ Generate a random CSV file with a schema.
 
 ## Features
 
-* Provide a schema with `int`, `float` or `str`
+* Provide a schema with labels specifying generators (see below)
 * Can supply filemask to name file (extension is always txt for now)
 * Can add datetime stamp to filename (useful for many files)
 * Can supply seed for repeated result
+* Generators:
+** int = random integer
+** float = random floating point number
+** str = random string
+** ip = random (possibly legal) ip address (IPv4)
+** date = random date and time stamp
+
 
 ## Usage
 
@@ -16,7 +23,7 @@ Get help with `-h`
 Example usage:
 
 ```python
-python generate_csv.py 11 --filemask=test --addtimestamp --delimiter=, --how-many=1 --seed=42 int int float str
+python generate_csv.py 11 --filemask=test --addtimestamp --delimiter=, --how-many=2 --seed=42 int int float str ip date
 ```
 
 generates (just 1 file)

@@ -57,9 +57,12 @@ if __name__ == '__main__':
                         help='the CSV delimiter')
     parser.add_argument('--seed', type=int, required=False,
                         help='optional random seed')
+    parser.add_argument('--how-many', dest='howmany', type=int, default=1, required=False,
+                        help='how many files to generate. Default is 1')
     parser.add_argument('schema', type=str, nargs='+',
                         choices=['int', 'str', 'float'],
                         help='list of column types to generate')
 
     args = parser.parse_args()
-    integer_csv(args.filemask, args.addtime, args.rows, args.schema, args.delimiter, args.seed)
+    for i in range(args.howmany):
+        integer_csv(args.filemask, args.addtime, args.rows, args.schema, args.delimiter, args.seed)

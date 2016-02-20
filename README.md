@@ -16,10 +16,10 @@ Get help with `-h`
 Example usage:
 
 ```python
-python generate_csv.py 11 --filemask=test --addtimestamp --delimiter=, --seed=42 int int float str
+python generate_csv.py 11 --filemask=test --addtimestamp --delimiter=, --how-many=1 --seed=42 int int float str
 ```
 
-generates
+generates (just 1 file)
 
 ```csv
 686579303,119540831,0.025010755222666936,JFCrnl2edlBD

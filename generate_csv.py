@@ -4,9 +4,17 @@ import random
 import string
 import sys
 from datetime import datetime
+from enum import Enum
 
 import namealizer
 
+
+class Level(Enum):
+    CRITICAL = 1
+    SEVERE = 2
+    MODERATE = 3
+    MILD = 4
+    INFO = 5
 
 def integer_csv(filemask, addtime, rows, schema, delimiter, header, seed):
     if seed:
@@ -61,13 +69,18 @@ def integer_csv(filemask, addtime, rows, schema, delimiter, header, seed):
             generators.append(lambda: ''.join(
                 generatepipewords(seed)
             ))
+        elif column == 'level':
+            head.append('level')
+            generators.append(lambda: ''.join(
+                'level:' + Level(random.randint(1, 5)).name
+            ))
+
 
 # # // deal with csv limitation for delimiter var
 #             doesn't work!
 #         if delimiter=='\\t':
 #             delimiter='\t'
 
-        # test existence of file
     try:
         f = open(filename,'w',newline='', encoding='utf-8')
         writer = csv.writer(f,delimiter=delimiter)
@@ -118,9 +131,10 @@ if __name__ == '__main__':
                         help='generate a simple header')
     parser.set_defaults(header=False)
     parser.add_argument('schema', type=str, nargs='+',
-                        choices=['int', 'str', 'float', 'ip', 'date', 'word', 'pipewords', 'name'],
+                        choices=['int', 'str', 'float', 'ip', 'date', 'word', 'pipewords', 'name', 'level'],
                         help='list of column types to generate')
 
     args = parser.parse_args()
     for i in range(args.howmany):
+        sys.stdout.write('file ' + str(i) + '\n')
         integer_csv(args.filemask, args.addtime, args.rows, args.schema, args.delimiter, args.header, args.seed)

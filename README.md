@@ -16,6 +16,7 @@ Generate a random CSV file with a schema.
 5. date = random date and time stamp
 6. word = random namealizer word
 7. pipewords = one to three pipedelimited random namealizer words
+8. level = simulated log entries
 
 Namealizer words generated using the project at
 https://github.com/LeonardMH/namealizer

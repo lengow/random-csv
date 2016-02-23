@@ -16,6 +16,14 @@ class Level(Enum):
     MILD = 4
     INFO = 5
 
+class CardinalNS(Enum):
+    N = 1
+    S = 2
+
+class CardinalEW(Enum):
+    W = 1
+    E = 2
+
 def integer_csv(filemask, addtime, rows, schema, delimiter, header, seed):
     if seed:
         random.seed(seed)
@@ -25,10 +33,10 @@ def integer_csv(filemask, addtime, rows, schema, delimiter, header, seed):
     filename = filemask + '_' + filestamp + extension if addtime else filemask + extension
 
     char_set = (string.ascii_letters + string.digits + ' ')
-                # '' + "'" + "#&* \t")
+    # '' + "'" + "#&* \t")
 
     head = []
-    intcount, strcount, floatcount, ipcount, datecount, wordcount, pipewordscount, namecount = 0,0,0,0,0,0,0,0
+    intcount, strcount, floatcount, ipcount, datecount, wordcount, pipewordscount, namecount, levelcount, degreecount = 0,0,0,0,0,0,0,0,0,0
     for column in schema:
         if column == 'int':
             intcount += 1
@@ -48,8 +56,8 @@ def integer_csv(filemask, addtime, rows, schema, delimiter, header, seed):
             head.append('ip_' + str(ipcount))
             # http://stackoverflow.com/a/21014713 Thanks jonrsharpe
             generators.append(lambda: ''.join(
-              ".".join(map(str, (random.randint(0, 255)
-                        for _ in range(4))))
+                ".".join(map(str, (random.randint(0, 255)
+                                   for _ in range(4))))
             ))
         elif column == 'date':
             datecount += 1
@@ -70,16 +78,51 @@ def integer_csv(filemask, addtime, rows, schema, delimiter, header, seed):
                 generatepipewords(seed)
             ))
         elif column == 'level':
-            head.append('level')
+            levelcount += 1;
+            head.append('level' + str(levelcount))
             generators.append(lambda: ''.join(
-                'level:' + Level(random.randint(1, 5)).name
+                Level(random.randint(1, 5)).name
+            ))
+        elif column == 'lat':
+            head.append('latitude')
+            generators.append(lambda: ''.join(
+                "".join(map(str,
+                            (random.randint(0, 89),
+                             "°",
+                             " ",
+                             random.randint(0, 59),
+                             "′",
+                             " ",
+                             random.randint(0, 59),
+                             ".",
+                             random.randint(1,99),
+                             "″",
+                             " ",
+                             CardinalNS(random.randint(1,2)).name))),
+            ))
+        elif column == 'long':
+            head.append('longitude')
+            generators.append(lambda: ''.join(
+                "".join(map(str,
+                            (random.randint(0, 89),
+                             "°",
+                             " ",
+                             random.randint(0, 59),
+                             "′",
+                             " ",
+                             random.randint(0, 59),
+                             ".",
+                             random.randint(1,99),
+                             "″",
+                             " ",
+                             CardinalEW(random.randint(1,2)).name))),
             ))
 
 
-# # // deal with csv limitation for delimiter var
-#             doesn't work!
-#         if delimiter=='\\t':
-#             delimiter='\t'
+        # # // deal with csv limitation for delimiter var
+        #             doesn't work!
+        #         if delimiter=='\\t':
+        #             delimiter='\t'
 
     try:
         f = open(filename,'w',newline='', encoding='utf-8')
@@ -131,7 +174,7 @@ if __name__ == '__main__':
                         help='generate a simple header')
     parser.set_defaults(header=False)
     parser.add_argument('schema', type=str, nargs='+',
-                        choices=['int', 'str', 'float', 'ip', 'date', 'word', 'pipewords', 'name', 'level'],
+                        choices=['int', 'str', 'float', 'ip', 'date', 'word', 'pipewords', 'name', 'level', 'lat', 'long'],
                         help='list of column types to generate')
 
     args = parser.parse_args()

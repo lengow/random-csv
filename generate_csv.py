@@ -104,7 +104,7 @@ def integer_csv(filemask, addtime, rows, schema, delimiter, header, seed):
             head.append('longitude')
             generators.append(lambda: ''.join(
                 "".join(map(str,
-                            (random.randint(0, 89),
+                            (random.randint(0, 179),
                              "°",
                              " ",
                              random.randint(0, 59),

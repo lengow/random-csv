@@ -24,9 +24,8 @@ class CardinalEW(Enum):
     W = 1
     E = 2
 
-def integer_csv(filemask, addtime, rows, schema, delimiter, header, seed):
-    if seed:
-        random.seed(seed)
+def integer_csv(filemask, addtime, rows, schema, delimiter, sentence_max_size, header, seed):
+    wg = namealizer.WordGenerator(seed=seed)
     generators = []
     filestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S.%f')[:-3]
     extension = '.txt'
@@ -36,7 +35,8 @@ def integer_csv(filemask, addtime, rows, schema, delimiter, header, seed):
     # '' + "'" + "#&* \t")
 
     head = []
-    intcount, strcount, floatcount, ipcount, datecount, wordcount, pipewordscount, namecount, levelcount, degreecount = 0,0,0,0,0,0,0,0,0,0
+    intcount, strcount, floatcount, ipcount, datecount, wordcount, pipewordscount, = 0,0,0,0,0,0,0
+    namecount, levelcount, degreecount, sentencecount, urlcount = 0,0,0,0,0
     for column in schema:
         if column == 'int':
             intcount += 1
@@ -69,13 +69,25 @@ def integer_csv(filemask, addtime, rows, schema, delimiter, header, seed):
             wordcount += 1
             head.append('label_' + str(wordcount))
             generators.append(lambda: ''.join(
-                generateword(seed)
+                generateword(wg)
             ))
         elif column == 'pipewords':
             wordcount += 1
             head.append('labels_' + str(pipewordscount))
             generators.append(lambda: ''.join(
-                generatepipewords(seed)
+                generatepipewords(wg)
+            ))
+        elif column == 'sentence':
+            wordcount += 1
+            head.append('labels_' + str(sentencecount))
+            generators.append(lambda: ''.join(
+                generatesentence(sentence_max_size, wg)
+            ))
+        elif column == 'url':
+            wordcount += 1
+            head.append('labels_' + str(urlcount))
+            generators.append(lambda: ''.join(
+                generateurl(wg)
             ))
         elif column == 'level':
             levelcount += 1;
@@ -135,19 +147,26 @@ def integer_csv(filemask, addtime, rows, schema, delimiter, header, seed):
         for x in range(rows):
             writer.writerow([g() for g in generators])
 
-def generateword(seed):
-    wg = namealizer.WordGenerator()
-    if seed:
-        wg.seed = seed
+def generateword(wg):
     return wg[1]
 
-def generatepipewords(seed):
-    pipes = random.randint(1, 3)
-    wg = namealizer.WordGenerator()
-    if seed:
-        wg.seed = seed
-    words = wg[pipes]
+def generatesentence(max_nb_words, wg):
+    sentence_size = random.randint(1, max_nb_words)
+    words = wg[sentence_size]
+    return words
+
+def generatepipewords(wg):
+    words = generatesentence(3, wg)
     retval = words.replace(' ','|')
+    return retval
+
+def generateurl(wg):
+    domain_gen = generatesentence(2, wg)
+    domain = domain_gen.replace(' ','.')+'.'+generateword(wg)[:3]
+    path_gen = generatesentence(5, wg)
+    path = path_gen.replace(' ','/')
+    file = generateword(wg)+'.'+generateword(wg)[:3]
+    retval = "/".join([random.choice(['http:/', 'https:/']), domain, path, file])
     return retval
 
 if __name__ == '__main__':
@@ -172,12 +191,16 @@ if __name__ == '__main__':
                         help='how many files to generate. Default is 1')
     parser.add_argument('--header', dest='header', action='store_true', required=False,
                         help='generate a simple header')
+    parser.add_argument('--sentence-max-size', dest='sentence_max_size', type=int, default=10, required=False,
+                        help='maximum size of sentences. Default is 10')
     parser.set_defaults(header=False)
     parser.add_argument('schema', type=str, nargs='+',
-                        choices=['int', 'str', 'float', 'ip', 'date', 'word', 'pipewords', 'name', 'level', 'lat', 'long'],
+                        choices=['int', 'str', 'float', 'ip', 'date', 'word', 'pipewords', 'name', 'level', 'lat',
+                                 'long', 'sentence', 'url'],
                         help='list of column types to generate')
 
     args = parser.parse_args()
     for i in range(args.howmany):
         sys.stdout.write('file ' + str(i) + '\n')
-        integer_csv(args.filemask, args.addtime, args.rows, args.schema, args.delimiter, args.header, args.seed)
+        integer_csv(args.filemask, args.addtime, args.rows, args.schema, args.delimiter, args.sentence_max_size,
+                    args.header, args.seed)

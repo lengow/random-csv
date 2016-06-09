@@ -16,27 +16,30 @@ class Level(Enum):
     MILD = 4
     INFO = 5
 
+
 class CardinalNS(Enum):
     N = 1
     S = 2
+
 
 class CardinalEW(Enum):
     W = 1
     E = 2
 
-def integer_csv(filemask, addtime, rows, schema, delimiter, sentence_max_size, header, seed):
+
+def generate_csv(filemask, addtime, rows, schema, delimiter, sentence_max_size, header, seed):
     wg = namealizer.WordGenerator(seed=seed)
     generators = []
     filestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S.%f')[:-3]
-    extension = '.txt'
+    extension = '.csv'
     filename = filemask + '_' + filestamp + extension if addtime else filemask + extension
 
     char_set = (string.ascii_letters + string.digits + ' ')
     # '' + "'" + "#&* \t")
 
     head = []
-    intcount, strcount, floatcount, ipcount, datecount, wordcount, pipewordscount, = 0,0,0,0,0,0,0
-    namecount, levelcount, degreecount, sentencecount, urlcount = 0,0,0,0,0
+    intcount, strcount, floatcount, ipcount, datecount, wordcount, pipewordscount, = 0, 0, 0, 0, 0, 0, 0
+    namecount, levelcount, degreecount, sentencecount, urlcount = 0, 0, 0, 0, 0
     for column in schema:
         if column == 'int':
             intcount += 1
@@ -72,20 +75,20 @@ def integer_csv(filemask, addtime, rows, schema, delimiter, sentence_max_size, h
                 generateword(wg)
             ))
         elif column == 'pipewords':
-            wordcount += 1
-            head.append('labels_' + str(pipewordscount))
+            pipewordscount += 1
+            head.append('pipe_' + str(pipewordscount))
             generators.append(lambda: ''.join(
                 generatepipewords(wg)
             ))
         elif column == 'sentence':
-            wordcount += 1
-            head.append('labels_' + str(sentencecount))
+            sentencecount += 1
+            head.append('sentence_' + str(sentencecount))
             generators.append(lambda: ''.join(
                 generatesentence(sentence_max_size, wg)
             ))
         elif column == 'url':
-            wordcount += 1
-            head.append('labels_' + str(urlcount))
+            urlcount += 1
+            head.append('url_' + str(urlcount))
             generators.append(lambda: ''.join(
                 generateurl(wg)
             ))
@@ -107,10 +110,10 @@ def integer_csv(filemask, addtime, rows, schema, delimiter, sentence_max_size, h
                              " ",
                              random.randint(0, 59),
                              ".",
-                             random.randint(1,99),
+                             random.randint(1, 99),
                              "″",
                              " ",
-                             CardinalNS(random.randint(1,2)).name))),
+                             CardinalNS(random.randint(1, 2)).name))),
             ))
         elif column == 'long':
             head.append('longitude')
@@ -124,50 +127,55 @@ def integer_csv(filemask, addtime, rows, schema, delimiter, sentence_max_size, h
                              " ",
                              random.randint(0, 59),
                              ".",
-                             random.randint(1,99),
+                             random.randint(1, 99),
                              "″",
                              " ",
-                             CardinalEW(random.randint(1,2)).name))),
+                             CardinalEW(random.randint(1, 2)).name))),
             ))
 
 
-        # # // deal with csv limitation for delimiter var
-        #             doesn't work!
-        #         if delimiter=='\\t':
-        #             delimiter='\t'
+            # # // deal with csv limitation for delimiter var
+            #             doesn't work!
+            #         if delimiter=='\\t':
+            #             delimiter='\t'
 
     try:
-        f = open(filename,'w',newline='', encoding='utf-8')
-        writer = csv.writer(f,delimiter=delimiter)
+        f = open(filename, 'w', newline='', encoding='utf-8')
+        writer = csv.writer(f, delimiter=delimiter)
     except:
-        writer = csv.writer(sys.stdout,delimiter=delimiter)
-    with open(filename,'w') as f:
+        writer = csv.writer(sys.stdout, delimiter=delimiter)
+    with open(filename, 'w') as f:
         if header:
             writer.writerow(head)
         for x in range(rows):
             writer.writerow([g() for g in generators])
 
+
 def generateword(wg):
     return wg[1]
+
 
 def generatesentence(max_nb_words, wg):
     sentence_size = random.randint(1, max_nb_words)
     words = wg[sentence_size]
     return words
 
+
 def generatepipewords(wg):
     words = generatesentence(3, wg)
-    retval = words.replace(' ','|')
+    retval = words.replace(' ', '|')
     return retval
+
 
 def generateurl(wg):
     domain_gen = generatesentence(2, wg)
-    domain = domain_gen.replace(' ','.')+'.'+generateword(wg)[:3]
-    path_gen = generatesentence(5, wg)
-    path = path_gen.replace(' ','/')
-    file = generateword(wg)+'.'+generateword(wg)[:3]
+    domain = domain_gen.replace(' ', '.') + '.' + generateword(wg)[:3]
+    path_gen = generatesentence(3, wg)
+    path = path_gen.replace(' ', '/')
+    file = generateword(wg) + '.' + generateword(wg)[:3]
     retval = "/".join([random.choice(['http:/', 'https:/']), domain, path, file])
     return retval
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -202,5 +210,5 @@ if __name__ == '__main__':
     args = parser.parse_args()
     for i in range(args.howmany):
         sys.stdout.write('file ' + str(i) + '\n')
-        integer_csv(args.filemask, args.addtime, args.rows, args.schema, args.delimiter, args.sentence_max_size,
-                    args.header, args.seed)
+        generate_csv(args.filemask, args.addtime, args.rows, args.schema, args.delimiter, args.sentence_max_size,
+                     args.header, args.seed)

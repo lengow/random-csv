@@ -4,11 +4,11 @@
 from distutils.core import setup
 
 setup(
-    name='random_csv',
+    name='random-csv',
     version='1.0.0',
     author='Lucie Masson',
     author_email='lucie.masson@lengow.com',
-    packages=['random_csv'],
+    packages=['random-csv'],
     url='https://github.com/lengow/random-csv',
     license='LICENSE.txt',
     description='Generate a random csv file',

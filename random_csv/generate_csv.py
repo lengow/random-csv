@@ -144,12 +144,12 @@ def csv_generator(rows, schema, delimiter, sentence_max_size, header, seed):
 
     # return the header at first call if specified
     if header:
-        yield delimiter.join(head)
+        yield head
 
     # return randomly generated csv lines
     n = 0
     while n < rows:
-        yield delimiter.join([str(g()) for g in generators])
+        yield [g() for g in generators]
         n += 1
 
 
@@ -225,5 +225,5 @@ if __name__ == '__main__':
             writer = csv.writer(sys.stdout, delimiter=args.delimiter)
         with open(filename, 'w') as f:
             for line in gen:
-                writer.writerow(line.split(args.delimiter))
+                writer.writerow(line)
 

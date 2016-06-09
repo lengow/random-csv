@@ -17,6 +17,8 @@ Generate a random CSV file with a schema.
 6. word = random namealizer word
 7. pipewords = one to three pipedelimited random namealizer words
 8. level = simulated log entries
+9. sentence = random sentence with a maximum number of words
+10. url = random url
 
 Namealizer words generated using the project at
 https://github.com/LeonardMH/namealizer

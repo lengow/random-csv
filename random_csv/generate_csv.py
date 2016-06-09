@@ -27,16 +27,25 @@ class CardinalEW(Enum):
     E = 2
 
 
-def generate_csv(filemask, addtime, rows, schema, delimiter, sentence_max_size, header, seed):
+def csv_generator(rows, schema, delimiter, sentence_max_size, header, seed):
+    """
+    generator of random csv lines
+
+    :param rows: number of rows in the file
+    :param schema: description of the file columns, as a list of strings
+    :param sentence_max_size: maximum number of words on random sentences
+    :param header: if header is displayed or not, boolean
+    :param seed: seed for the random generators
+
+    """
+
+    # initializations of generator and charset
     wg = namealizer.WordGenerator(seed=seed)
     generators = []
-    filestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S.%f')[:-3]
-    extension = '.csv'
-    filename = filemask + '_' + filestamp + extension if addtime else filemask + extension
-
     char_set = (string.ascii_letters + string.digits + ' ')
     # '' + "'" + "#&* \t")
 
+    # creation of the random generators + headers
     head = []
     intcount, strcount, floatcount, ipcount, datecount, wordcount, pipewordscount, = 0, 0, 0, 0, 0, 0, 0
     namecount, levelcount, degreecount, sentencecount, urlcount = 0, 0, 0, 0, 0
@@ -133,22 +142,15 @@ def generate_csv(filemask, addtime, rows, schema, delimiter, sentence_max_size, 
                              CardinalEW(random.randint(1, 2)).name))),
             ))
 
+    # return the header at first call if specified
+    if header:
+        yield delimiter.join(head)
 
-            # # // deal with csv limitation for delimiter var
-            #             doesn't work!
-            #         if delimiter=='\\t':
-            #             delimiter='\t'
-
-    try:
-        f = open(filename, 'w', newline='', encoding='utf-8')
-        writer = csv.writer(f, delimiter=delimiter)
-    except:
-        writer = csv.writer(sys.stdout, delimiter=delimiter)
-    with open(filename, 'w') as f:
-        if header:
-            writer.writerow(head)
-        for x in range(rows):
-            writer.writerow([g() for g in generators])
+    # return randomly generated csv lines
+    n = 0
+    while n < rows:
+        yield delimiter.join([str(g()) for g in generators])
+        n += 1
 
 
 def generateword(wg):
@@ -210,5 +212,18 @@ if __name__ == '__main__':
     args = parser.parse_args()
     for i in range(args.howmany):
         sys.stdout.write('file ' + str(i) + '\n')
-        generate_csv(args.filemask, args.addtime, args.rows, args.schema, args.delimiter, args.sentence_max_size,
-                     args.header, args.seed)
+        gen = csv_generator(args.rows, args.schema, args.delimiter, args.sentence_max_size, args.header, args.seed)
+
+        filestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
+        extension = '.csv'
+        filename = args.filemask + '_' + filestamp + extension if args.addtime else args.filemask + extension
+
+        try:
+            f = open(filename, 'w', newline='', encoding='utf-8')
+            writer = csv.writer(f, delimiter=args.delimiter)
+        except:
+            writer = csv.writer(sys.stdout, delimiter=args.delimiter)
+        with open(filename, 'w') as f:
+            for line in gen:
+                writer.writerow(line.split(args.delimiter))
+

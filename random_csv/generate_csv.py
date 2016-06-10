@@ -28,13 +28,15 @@ class CardinalEW(Enum):
     E = 2
 
 
-def csv_generator(rows, schema, delimiter, sentence_max_size, header, seed):
+def csv_generator(rows, schema, sentence_max_size, desc_max_size, categories_size, header, seed):
     """
     generator of random csv lines
 
     :param rows: number of rows in the file
     :param schema: description of the file columns, as a list of strings
     :param sentence_max_size: maximum number of words on random sentences
+    :param desc_max_size: maximum number of words on random descriptions
+    :param categories_size: number of elements in categories
     :param header: if header is displayed or not, boolean
     :param seed: seed for the random generators
 
@@ -45,17 +47,24 @@ def csv_generator(rows, schema, delimiter, sentence_max_size, header, seed):
     wg.dictionary = OrderedDict(sorted(wg.dictionary.items(), key=lambda x:x[1], reverse=True))
     generators = []
     char_set = (string.ascii_letters + string.digits + ' ')
+    categories = []
+    generated_ids = []
     # '' + "'" + "#&* \t")
 
     # creation of the random generators + headers
     head = []
-    intcount, strcount, floatcount, ipcount, datecount, wordcount, pipewordscount, = 0, 0, 0, 0, 0, 0, 0
-    namecount, levelcount, degreecount, sentencecount, urlcount = 0, 0, 0, 0, 0
+    intcount, strcount, floatcount, ipcount, datecount, wordcount, pipewordscount, desccount = 0, 0, 0, 0, 0, 0, 0, 0
+    levelcount, degreecount, sentencecount, urlcount, idcount, categorycount = 0, 0, 0, 0, 0, 0
     for column in schema:
         if column == 'int':
             intcount += 1
-            head.append('number_' + str(intcount))
+            head.append('number_' + str(idcount))
             generators.append(lambda: random.randint(0, 1e9))
+        if column == 'id':
+            idcount += 1
+            head.append('id_' + str(idcount))
+            generated_ids.append(list_of_ids(rows))
+            generators.append(lambda: generated_ids[idcount-1].pop())
         elif column == 'str':
             strcount += 1
             head.append('text_' + str(strcount))
@@ -64,7 +73,7 @@ def csv_generator(rows, schema, delimiter, sentence_max_size, header, seed):
         elif column == 'float':
             floatcount += 1
             head.append('float_' + str(floatcount))
-            generators.append(lambda: random.random())
+            generators.append(lambda: random.randint(0, 1e4)+random.random())
         elif column == 'ip':
             ipcount += 1
             head.append('ip_' + str(ipcount))
@@ -85,6 +94,12 @@ def csv_generator(rows, schema, delimiter, sentence_max_size, header, seed):
             generators.append(lambda: ''.join(
                 generateword(wg)
             ))
+        elif column == 'category':
+            categorycount += 1
+            elements = wg[categories_size]
+            categories.append(elements.split())
+            head.append('category_' + str(categorycount))
+            generators.append(lambda: random.choice(categories[categorycount-1]))
         elif column == 'pipewords':
             pipewordscount += 1
             head.append('pipe_' + str(pipewordscount))
@@ -96,6 +111,12 @@ def csv_generator(rows, schema, delimiter, sentence_max_size, header, seed):
             head.append('sentence_' + str(sentencecount))
             generators.append(lambda: ''.join(
                 generatesentence(sentence_max_size, wg)
+            ))
+        elif column == 'description':
+            desccount += 1
+            head.append('description_' + str(desccount))
+            generators.append(lambda: ''.join(
+                generatesentence(desc_max_size, wg)
             ))
         elif column == 'url':
             urlcount += 1
@@ -155,6 +176,23 @@ def csv_generator(rows, schema, delimiter, sentence_max_size, header, seed):
         n += 1
 
 
+def list_of_ids(nb):
+    """ generates a list of unique ids"""
+
+    # sorted ids, with a random step between each
+    ids_tmp = [random.randint(1, 100)]
+    for _ in range(nb-1):
+        ids_tmp.append(ids_tmp[-1]+random.randint(1, 100))
+
+    # random mixing of the ids
+    ids = []
+    for i in range(nb):
+        index = random.randint(0, nb-i-1)
+        ids.append(ids_tmp[index])
+        del ids_tmp[index]
+    return ids
+
+
 def generateword(wg):
     return wg[1]
 
@@ -205,16 +243,23 @@ if __name__ == '__main__':
                         help='generate a simple header')
     parser.add_argument('--sentence-max-size', dest='sentence_max_size', type=int, default=10, required=False,
                         help='maximum size of sentences. Default is 10')
+    parser.add_argument('--description-max-size', dest='desc_max_size', type=int, default=100, required=False,
+                        help='maximum size of sentences. Default is 100')
+    parser.add_argument('--categories-size', dest='categories_size', type=int, default=10, required=False,
+                        help='Number of elements in categories. Default is 10')
     parser.set_defaults(header=False)
     parser.add_argument('schema', type=str, nargs='+',
-                        choices=['int', 'str', 'float', 'ip', 'date', 'word', 'pipewords', 'name', 'level', 'lat',
-                                 'long', 'sentence', 'url'],
+                        choices=['int', 'str', 'float', 'ip', 'date', 'word', 'pipewords', 'level', 'lat',
+                                 'long', 'sentence', 'url', 'id', 'category', 'description'],
                         help='list of column types to generate')
 
     args = parser.parse_args()
     for i in range(args.howmany):
         sys.stdout.write('file ' + str(i) + '\n')
-        gen = csv_generator(args.rows, args.schema, args.delimiter, args.sentence_max_size, args.header, args.seed)
+        schema = args.schema
+        schema.extend(['word']*40)
+        gen = csv_generator(args.rows, schema, args.sentence_max_size, args.desc_max_size, args.categories_size,
+                            args.header, args.seed)
 
         filestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
         extension = '.csv'

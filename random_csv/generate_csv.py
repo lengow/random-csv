@@ -3,6 +3,7 @@ import csv
 import random
 import string
 import sys
+from collections import OrderedDict
 from datetime import datetime
 from enum import Enum
 
@@ -41,6 +42,7 @@ def csv_generator(rows, schema, delimiter, sentence_max_size, header, seed):
 
     # initializations of generator and charset
     wg = namealizer.WordGenerator(seed=seed)
+    wg.dictionary = OrderedDict(sorted(wg.dictionary.items(), key=lambda x:x[1], reverse=True))
     generators = []
     char_set = (string.ascii_letters + string.digits + ' ')
     # '' + "'" + "#&* \t")

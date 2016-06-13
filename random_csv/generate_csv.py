@@ -6,6 +6,7 @@ import sys
 from collections import OrderedDict
 from datetime import datetime
 from enum import Enum
+from functools import partial
 
 import namealizer
 
@@ -42,13 +43,17 @@ def csv_generator(rows, schema, sentence_max_size, desc_max_size, categories_siz
 
     """
 
-    # initializations of generator and charset
+    # initializations of generators and charset
     wg = namealizer.WordGenerator(seed=seed)
     wg.dictionary = OrderedDict(sorted(wg.dictionary.items(), key=lambda x:x[1], reverse=True))
     generators = []
     char_set = (string.ascii_letters + string.digits + ' ')
     categories = []
     generated_ids = []
+    def choose_category_element(i):
+        return random.choice(categories[i])
+    def choose_id_element(i):
+        return generated_ids[i].pop()
     # '' + "'" + "#&* \t")
 
     # creation of the random generators + headers
@@ -64,7 +69,7 @@ def csv_generator(rows, schema, sentence_max_size, desc_max_size, categories_siz
             idcount += 1
             head.append('id_' + str(idcount))
             generated_ids.append(list_of_ids(rows))
-            generators.append(lambda: generated_ids[idcount-1].pop())
+            generators.append(partial(choose_id_element, idcount-1))
         elif column == 'str':
             strcount += 1
             head.append('text_' + str(strcount))
@@ -99,7 +104,7 @@ def csv_generator(rows, schema, sentence_max_size, desc_max_size, categories_siz
             elements = wg[categories_size]
             categories.append(elements.split())
             head.append('category_' + str(categorycount))
-            generators.append(lambda: random.choice(categories[categorycount-1]))
+            generators.append(partial(choose_category_element, categorycount-1))
         elif column == 'pipewords':
             pipewordscount += 1
             head.append('pipe_' + str(pipewordscount))
@@ -164,6 +169,8 @@ def csv_generator(rows, schema, sentence_max_size, desc_max_size, categories_siz
                              " ",
                              CardinalEW(random.randint(1, 2)).name))),
             ))
+
+    print(categories)
 
     # return the header at first call if specified
     if header:

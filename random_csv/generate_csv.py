@@ -170,8 +170,6 @@ def csv_generator(rows, schema, sentence_max_size, desc_max_size, categories_siz
                              CardinalEW(random.randint(1, 2)).name))),
             ))
 
-    print(categories)
-
     # return the header at first call if specified
     if header:
         yield head

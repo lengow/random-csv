@@ -207,8 +207,12 @@ def generateurl(wg):
 
 def generateid(i, generated_ids, max_size):
     id = random.randint(1, max_size)
-    while id in generated_ids[i]:
+    nb_call = 0
+    while id in generated_ids[i] and nb_call < max_size:
         id = random.randint(1, max_size)
+        nb_call += 1
+    if nb_call==max_size:
+        raise Exception("Unable to generate unique ID")
     generated_ids[i].add(id)
     return id
 

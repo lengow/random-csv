@@ -52,8 +52,6 @@ def csv_generator(rows, schema, sentence_max_size, desc_max_size, categories_siz
     generated_ids = []
     def choose_category_element(i):
         return random.choice(categories[i])
-    def choose_id_element(i):
-        return generated_ids[i].pop()
     # '' + "'" + "#&* \t")
 
     # creation of the random generators + headers
@@ -68,8 +66,8 @@ def csv_generator(rows, schema, sentence_max_size, desc_max_size, categories_siz
         if column == 'id':
             idcount += 1
             head.append('id_' + str(idcount))
-            generated_ids.append(list_of_ids(rows))
-            generators.append(partial(choose_id_element, idcount-1))
+            generated_ids.append(set())
+            generators.append(partial(generateid, idcount-1, generated_ids, rows*100))
         elif column == 'str':
             strcount += 1
             head.append('text_' + str(strcount))
@@ -181,23 +179,6 @@ def csv_generator(rows, schema, sentence_max_size, desc_max_size, categories_siz
         n += 1
 
 
-def list_of_ids(nb):
-    """ generates a list of unique ids"""
-
-    # sorted ids, with a random step between each
-    ids_tmp = [random.randint(1, 100)]
-    for _ in range(nb-1):
-        ids_tmp.append(ids_tmp[-1]+random.randint(1, 100))
-
-    # random mixing of the ids
-    ids = []
-    for i in range(nb):
-        index = random.randint(0, nb-i-1)
-        ids.append(ids_tmp[index])
-        del ids_tmp[index]
-    return ids
-
-
 def generateword(wg):
     return wg[1]
 
@@ -222,6 +203,14 @@ def generateurl(wg):
     file = generateword(wg) + '.' + generateword(wg)[:3]
     retval = "/".join([random.choice(['http:/', 'https:/']), domain, path, file])
     return retval
+
+
+def generateid(i, generated_ids, max_size):
+    id = random.randint(1, max_size)
+    while id in generated_ids[i]:
+        id = random.randint(1, max_size)
+    generated_ids[i].add(id)
+    return id
 
 
 if __name__ == '__main__':
